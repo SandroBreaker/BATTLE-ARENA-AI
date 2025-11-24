@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Chave para o Nosso Enigma</title>
+    <!-- Importa a fonte para um toque romântico e elegante (Playfair Display) -->
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Inter:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos customizados para o tema Dark Romance */
+        :root {
+            --color-dark: #0a0a0a;
+            --color-accent: #8b0000; /* Vermelho escuro, vinho */
+            --color-light-accent: #ff69b4; /* Rosa choque suave para brilho */
+            --color-text-main: #f0f0f0;
+            --font-display: 'Playfair Display', serif;
+            --font-body: 'Inter', sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--color-dark);
+            color: var(--color-text-main);
+            font-family: var(--font-body);
+            overflow: hidden; /* Remove barras de rolagem desnecessárias */
+        }
+
+        .puzzle-container {
+            width: 90%;
+            max-width: 600px;
+            padding: 2.5rem;
+            background: rgba(17, 17, 17, 0.95);
+            border: 1px solid var(--color-accent);
+            box-shadow: 0 0 40px rgba(139, 0, 0, 0.3); /* Brilho sutil */
+            border-radius: 12px;
+            text-align: center;
+            transition: all 0.5s ease-in-out;
+        }
+
+        h1 {
+            font-family: var(--font-display);
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--color-light-accent);
+            text-shadow: 0 0 10px rgba(255, 105, 180, 0.5);
+        }
+
+        p.subtitle {
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: #ccc;
+        }
+
+        /* Área dos Cadeados (Slots) */
+        .lock-slots {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .lock-slot {
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            border: 2px dashed rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+            background: rgba(255, 255, 255, 0.03);
+            font-size: 0.9rem;
+            user-select: none;
+        }
+
+        .lock-slot:hover {
+            border-color: var(--color-light-accent);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        /* Estilo do Cadeado Fechado */
+        .lock-icon {
+            font-size: 2.5rem;
+            color: var(--color-accent);
+            transition: color 0.3s;
+        }
+
+        /* Estilo do Cadeado Aberto */
+        .lock-slot.unlocked {
+            border: 2px solid var(--color-light-accent);
+            background: rgba(139, 0, 0, 0.2);
+            box-shadow: 0 0 15px var(--color-light-accent);
+        }
+
+        .lock-slot.unlocked .lock-icon {
+            color: var(--color-light-accent);
+        }
+
+        /* Área das Chaves (Draggable Keys) */
+        .key-options {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .key {
+            width: 80px;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: var(--color-accent);
+            border-radius: 50%;
+            font-size: 2rem;
+            cursor: grab;
+            transition: transform 0.2s, box-shadow 0.2s;
+            user-select: none;
+            box-shadow: 0 0 10px rgba(139, 0, 0, 0.5);
+            color: var(--color-text-main);
+        }
+
+        .key:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--color-light-accent);
+        }
+
+        .key.dragging {
+            opacity: 0.7;
+            transform: scale(0.95);
+        }
+        
+        /* Chave correta no slot - peça arrastada desaparece */
+        .key.correct {
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Mensagem Secreta (Hidden initially) */
+        .secret-message {
+            margin-top: 3rem;
+            padding: 2rem;
+            background: var(--color-dark);
+            border-radius: 8px;
+            border: 2px solid var(--color-light-accent);
+            box-shadow: 0 0 30px rgba(255, 105, 180, 0.7);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 1s, transform 1s;
+        }
+
+        .secret-message.revealed {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .secret-message h2 {
+            font-family: var(--font-display);
+            font-size: 2rem;
+            color: var(--color-light-accent);
+            margin-bottom: 1rem;
+        }
+
+        .secret-message p {
+            font-size: 1.2rem;
+            line-height: 1.6;
+            font-style: italic;
+        }
+
+        /* Responsividade para telas menores (mobile-first) */
+        @media (max-width: 500px) {
+            .puzzle-container {
+                padding: 1.5rem;
+                width: 95%;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            .lock-slots {
+                grid-template-columns: 1fr; /* 1 coluna em mobile */
+            }
+
+            .key-options {
+                justify-content: center;
+            }
+
+            .key {
+                width: 60px;
+                height: 60px;
+                font-size: 1.5rem;
+            }
+
+            .lock-icon {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="puzzle-container">
+        <h1>O Enigma do Coração Queimado</h1>
+        <p class="subtitle">Apenas a combinação correta de chaves revelará o que está escondido.</p>
+
+        <!-- Slots dos Cadeados -->
+        <div class="lock-slots" id="lock-slots">
+            <div class="lock-slot" data-key-id="key-diamond" id="slot-1">
+                <span class="lock-icon">🔒</span>
+                <span>Enigma 1</span>
+            </div>
+            <div class="lock-slot" data-key-id="key-heart" id="slot-2">
+                <span class="lock-icon">🔒</span>
+                <span>Enigma 2</span>
+            </div>
+            <div class="lock-slot" data-key-id="key-star" id="slot-3">
+                <span class="lock-icon">🔒</span>
+                <span>Enigma 3</span>
+            </div>
+            <div class="lock-slot" data-key-id="key-moon" id="slot-4">
+                <span class="lock-icon">🔒</span>
+                <span>Enigma 4</span>
+            </div>
+        </div>
+
+        <!-- Opções de Chaves (Arrastáveis) -->
+        <p class="subtitle" style="margin-bottom: 1rem;">Arraste as chaves para os cadeados correspondentes:</p>
+        <div class="key-options" id="key-options">
+            <div class="key" draggable="true" data-key-id="key-heart" id="key-heart">❤️</div>
+            <div class="key" draggable="true" data-key-id="key-moon" id="key-moon">🌙</div>
+            <div class="key" draggable="true" data-key-id="key-diamond" id="key-diamond">💎</div>
+            <div class="key" draggable="true" data-key-id="key-star" id="key-star">✨</div>
+        </div>
+
+        <!-- Mensagem Secreta (Inicialmente oculta) -->
+        <div class="secret-message" id="secret-message">
+            <h2>Você Desvendou o Mistério!</h2>
+            <p>Em cada chave e cadeado, há um pedaço do meu coração que te pertence. Você é a única pessoa que detém o código para a minha felicidade. Meu amor por você é um enigma infinito, e eu quero resolvê-lo todos os dias ao seu lado.</p>
+        </div>
+    </div>
+
+    <script>
+        // Lógica Zero-Bug para o Puzzle
+        document.addEventListener('DOMContentLoaded', () => {
+            const lockSlots = document.querySelectorAll('.lock-slot');
+            const keys = document.querySelectorAll('.key');
+            const secretMessage = document.getElementById('secret-message');
+            const keyOptionsContainer = document.getElementById('key-options');
+            
+            // Estado do puzzle: IDs das chaves corretas já colocadas nos slots
+            const correctMatches = new Set();
+            const totalLocks = lockSlots.length;
+            
+            let draggedKey = null;
+
+            // --- Funções de Manipulação do Estado ---
+
+            /**
+             * Verifica se todas as chaves foram colocadas corretamente
+             * e revela a mensagem secreta.
+             */
+            const checkWinCondition = () => {
+                if (correctMatches.size === totalLocks) {
+                    // Adiciona a classe para acionar a transição CSS de revelação
+                    secretMessage.classList.add('revealed');
+                    keyOptionsContainer.style.display = 'none'; // Esconde as chaves restantes
+                    
+                    // Altera a cor de fundo do container para um "boost" final
+                    const container = document.querySelector('.puzzle-container');
+                    container.style.boxShadow = '0 0 60px var(--color-light-accent)';
+                    container.style.borderColor = 'var(--color-light-accent)';
+                }
+            };
+            
+            /**
+             * Trata o início do arraste de uma chave.
+             * @param {DragEvent} e O evento de arrastar.
+             */
+            const handleDragStart = (e) => {
+                draggedKey = e.target;
+                draggedKey.classList.add('dragging');
+                // Adiciona o ID da chave ao dataTransfer para uso no drop
+                e.dataTransfer.setData('text/plain', draggedKey.dataset.keyId);
+            };
+
+            /**
+             * Trata o fim do arraste. Limpa o estado.
+             */
+            const handleDragEnd = () => {
+                if (draggedKey) {
+                    draggedKey.classList.remove('dragging');
+                    draggedKey = null;
+                }
+            };
+
+            /**
+             * Trata o evento de arrastar sobre o slot. Permite o drop.
+             * @param {DragEvent} e O evento de arrastar.
+             */
+            const handleDragOver = (e) => {
+                e.preventDefault(); // Necessário para permitir o drop
+            };
+
+            /**
+             * Trata o drop da chave no slot.
+             * @param {DragEvent} e O evento de drop.
+             */
+            const handleDrop = (e) => {
+                e.preventDefault();
+                const droppedKeyId = e.dataTransfer.getData('text/plain');
+                const targetSlot = e.currentTarget;
+                const requiredKeyId = targetSlot.dataset.keyId;
+
+                // Previne drop em slots já resolvidos
+                if (targetSlot.classList.contains('unlocked')) {
+                    console.log("Slot já resolvido.");
+                    return;
+                }
+
+                // Lógica de acerto/erro
+                if (droppedKeyId === requiredKeyId) {
+                    // Chave correta!
+                    targetSlot.classList.add('unlocked');
+                    targetSlot.innerHTML = `<span class="lock-icon">🔓</span><span>Cadeado Aberto!</span>`;
+                    correctMatches.add(requiredKeyId);
+
+                    // Encontra a chave original e a marca como resolvida
+                    const keyElement = document.getElementById(droppedKeyId);
+                    if (keyElement) {
+                        keyElement.classList.add('correct');
+                        keyElement.removeAttribute('draggable');
+                    }
+                    
+                    checkWinCondition();
+                } else {
+                    // Chave incorreta! (Feedback visual sutil de erro)
+                    console.log(`Chave errada: ${droppedKeyId} para slot que requeria ${requiredKeyId}`);
+                    targetSlot.style.animation = 'shake 0.5s';
+                    targetSlot.addEventListener('animationend', () => {
+                        targetSlot.style.animation = ''; // Limpa a animação
+                    }, { once: true });
+                }
+            };
+            
+            // Adiciona a animação de "shake" (erro) via JS para manter o CSS limpo, mas é melhor em CSS
+            const styleSheet = document.createElement("style");
+            styleSheet.innerText = `
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    20%, 60% { transform: translateX(-5px); }
+                    40%, 80% { transform: translateX(5px); }
+                }
+            `;
+            document.head.appendChild(styleSheet);
+
+
+            // --- Atribuição de Event Listeners ---
+            
+            // Eventos para as Chaves
+            keys.forEach(key => {
+                key.addEventListener('dragstart', handleDragStart);
+                key.addEventListener('dragend', handleDragEnd);
+                
+                // Suporte Touch (para mobile) - Simulação de Arraste
+                let touchStartPos = { x: 0, y: 0 };
+                
+                key.addEventListener('touchstart', (e) => {
+                    draggedKey = e.target;
+                    draggedKey.classList.add('dragging');
+                    const touch = e.touches[0];
+                    touchStartPos = { x: touch.clientX, y: touch.clientY };
+
+                    // Oculta a chave original e cria um clone para arrastar
+                    const clone = draggedKey.cloneNode(true);
+                    clone.id = 'drag-clone';
+                    clone.style.position = 'fixed';
+                    clone.style.zIndex = 1000;
+                    clone.style.left = `${touch.clientX - 40}px`;
+                    clone.style.top = `${touch.clientY - 40}px`;
+                    clone.style.pointerEvents = 'none'; // Não interfere em outros eventos
+                    document.body.appendChild(clone);
+                });
+
+                key.addEventListener('touchmove', (e) => {
+                    e.preventDefault();
+                    const clone = document.getElementById('drag-clone');
+                    if (!clone) return;
+                    const touch = e.touches[0];
+                    clone.style.left = `${touch.clientX - 40}px`;
+                    clone.style.top = `${touch.clientY - 40}px`;
+                });
+
+                key.addEventListener('touchend', (e) => {
+                    const clone = document.getElementById('drag-clone');
+                    if (clone) {
+                        const touch = e.changedTouches[0];
+                        
+                        // Determina o elemento sob o ponto de drop
+                        clone.style.display = 'none'; // Temporariamente oculta o clone para ver o que está por baixo
+                        const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+                        clone.style.display = 'flex'; // Restaura a visualização do clone
+                        
+                        // Remove o clone do DOM
+                        document.body.removeChild(clone);
+                        draggedKey.classList.remove('dragging');
+
+                        if (dropTarget && dropTarget.classList.contains('lock-slot')) {
+                            // Simula o evento de drop
+                            const fakeDropEvent = {
+                                preventDefault: () => {},
+                                currentTarget: dropTarget,
+                                dataTransfer: {
+                                    getData: (type) => (type === 'text/plain' ? draggedKey.dataset.keyId : ''),
+                                },
+                            };
+                            handleDrop(fakeDropEvent);
+                        }
+                    }
+                    draggedKey = null;
+                });
+            });
+
+            // Eventos para os Slots (Área de Drop)
+            lockSlots.forEach(slot => {
+                slot.addEventListener('dragover', handleDragOver);
+                slot.addEventListener('drop', handleDrop);
+            });
+        });
+    </script>
+</body>
+</html>
+

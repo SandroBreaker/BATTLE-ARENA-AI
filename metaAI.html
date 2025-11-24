@@ -1,0 +1,96 @@
+	<!DOCTYPE html>
+	<html lang="pt-BR">
+	<head>
+	    <meta charset="UTF-8">
+	    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	    <title>Página Romântica</title>
+	    <style>
+	    	body {
+	    background-color: #2c3e50;
+	    color: #fff;
+	    font-family: Arial, sans-serif;
+	}
+	
+	.container {
+	    text-align: center;
+	    margin-top: 50px;
+	}
+	
+	.puzzle {
+	    display: flex;
+	    flex-wrap: wrap;
+	    justify-content: center;
+	    margin-top: 20px;
+	}
+	
+	.piece {
+	    width: 100px;
+	    height: 100px;
+	    background-color: #34495e;
+	    margin: 10px;
+	    cursor: pointer;
+	}
+	
+	.piece:hover {
+	    background-color: #455a64;
+	}
+	
+	#reset {
+	    background-color: #e74c3c;
+	    color: #fff;
+	    border: none;
+	    padding: 10px 20px;
+	    font-size: 16px;
+	    cursor: pointer;
+	}
+	
+	#reset:hover {
+	    background-color: #c0392b;
+	}
+	    </style>
+	</head>
+	<body>
+	    <div class="container">
+	        <h1>Encontre o Coração</h1>
+	        <div class="puzzle">
+	            <div class="piece" id="piece1"></div>
+	            <div class="piece" id="piece2"></div>
+	            <div class="piece" id="piece3"></div>
+	            <div class="piece" id="piece4"></div>
+	        </div>
+	        <button id="reset">Resetar</button>
+	    </div>
+	    <script>
+	    	let pieces = document.querySelectorAll('.piece');
+	let resetButton = document.getElementById('reset');
+	let shuffledPieces = [];
+	
+	// Embaralhar as peças
+	for (let i = 0; i < pieces.length; i++) {
+	    shuffledPieces.push(pieces[i]);
+	}
+	shuffledPieces.sort(() => Math.random() - 0.5);
+	
+	// Posicionar as peças
+	for (let i = 0; i < pieces.length; i++) {
+	    pieces[i].style.backgroundImage = `url('heart${i + 1}.png')`;
+	    pieces[i].style.backgroundSize = 'cover';
+	    pieces[i].style.backgroundPosition = 'center';
+	    pieces[i].addEventListener('click', () => {
+	        // Trocar a peça com a próxima
+	        let nextPiece = shuffledPieces[(Array.prototype.indexOf.call(shuffledPieces, pieces[i]) + 1) % shuffledPieces.length];
+	        let temp = pieces[i].style.backgroundImage;
+	        pieces[i].style.backgroundImage = nextPiece.style.backgroundImage;
+	        nextPiece.style.backgroundImage = temp;
+	    });
+	}
+	
+	// Resetar o puzzle
+	resetButton.addEventListener('click', () => {
+	    for (let i = 0; i < pieces.length; i++) {
+	        pieces[i].style.backgroundImage = `url('heart${i + 1}.png')`;
+	    }
+	});
+	    </script>
+	</body>
+	</html>

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unlock My Heart</title>
+    <style>
+        /* --- CSS GERAL & DARK THEME --- */
+        :root {
+            --bg-color: #0f0f0f;
+            --card-bg: #1a1a1a;
+            --accent: #8a0303; /* Vermelho Sangue */
+            --accent-glow: #ff0000;
+            --text: #e0e0e0;
+            --font-main: 'Courier New', Courier, monospace; /* Estilo Datilografado/Retro */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text);
+            font-family: var(--font-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        /* Fundo animado sutil (Nevoeiro) */
+        body::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 50%, #2a0000 0%, #0f0f0f 70%);
+            opacity: 0.4;
+            z-index: -1;
+            animation: pulseBg 10s infinite alternate;
+        }
+
+        @keyframes pulseBg {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.6; }
+        }
+
+        h1 {
+            font-size: 2rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            text-shadow: 0 0 10px var(--accent);
+            animation: flicker 3s infinite;
+        }
+
+        @keyframes flicker {
+            0%, 18%, 22%, 25%, 53%, 57%, 100% { opacity: 1; }
+            20%, 24%, 55% { opacity: 0.4; }
+        }
+
+        /* --- CONTAINER DO JOGO --- */
+        .game-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            perspective: 1000px;
+            max-width: 90vw;
+        }
+
+        .card {
+            width: 70px;
+            height: 70px;
+            position: relative;
+            transform-style: preserve-3d;
+            transition: transform 0.5s;
+            cursor: pointer;
+        }
+
+        .card.flip {
+            transform: rotateY(180deg);
+        }
+
+        .card.matched {
+            pointer-events: none;
+            opacity: 0; /* Desaparece ao combinar, ou mude para 0.5 para ficar visível */
+            transition: opacity 0.5s ease 0.5s;
+        }
+
+        .front, .back {
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 8px;
+            backface-visibility: hidden;
+            border: 1px solid #333;
+            box-shadow: 0 0 10px rgba(0,0,0,0.8);
+        }
+
+        .front {
+            background: var(--card-bg);
+            font-size: 2rem;
+            color: #333; /* Oculto no escuro */
+        }
+
+        /* Ícone de interrogação ou capa da carta */
+        .front::after {
+            content: '†'; 
+            color: var(--accent);
+            font-size: 1.5rem;
+        }
+
+        .back {
+            background: var(--accent);
+            transform: rotateY(180deg);
+            font-size: 2rem;
+            color: #fff;
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        /* --- TELA DA CARTA (Recompensa) --- */
+        .letter-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0.8);
+            width: 80%;
+            max-width: 500px;
+            background: rgba(20, 20, 20, 0.95);
+            padding: 40px;
+            border: 1px solid var(--accent);
+            box-shadow: 0 0 30px var(--accent-glow);
+            text-align: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 1s ease;
+            z-index: 10;
+        }
+
+        .letter-container.show {
+            opacity: 1;
+            pointer-events: all;
+            transform: translate(-50%, -50%) scale(1);
+        }
+
+        .letter-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #ddd;
+        }
+
+        .signature {
+            font-style: italic;
+            color: var(--accent);
+            margin-top: 15px;
+            font-size: 1.2rem;
+        }
+
+        button {
+            margin-top: 20px;
+            background: transparent;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            padding: 10px 20px;
+            cursor: pointer;
+            font-family: inherit;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background: var(--accent);
+            color: #000;
+            box-shadow: 0 0 15px var(--accent);
+        }
+
+        /* --- EFEITO DE CORAÇÕES (CANVAS) --- */
+        canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        @media (max-width: 400px) {
+            .game-container {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+
+    <!-- TÍTULO -->
+    <h1 id="title">Una as Almas</h1>
+
+    <!-- TABULEIRO DO PUZZLE -->
+    <div class="game-container" id="gameBoard">
+        <!-- As cartas serão geradas via JS -->
+    </div>
+
+    <!-- CARTA DE AMOR (Oculta) -->
+    <div class="letter-container" id="letter">
+        <h2>Você desvendou...</h2>
+        <p class="letter-text">
+            Mesmo na escuridão mais profunda, você é a única luz que eu sigo.<br><br>
+            Você encontrou todas as partes de mim que estavam perdidas. O quebra-cabeça está completo, assim como eu fico quando estou com você.
+        </p>
+        <p class="signature">Eternamente seu(a), [Seu Nome]</p>
+        <button onclick="restartGame()">Trancar novamente</button>
+    </div>
+
+    <script>
+        // --- CONFIGURAÇÃO DO JOGO ---
+        const emojis = ['🖤', '🩸', '🍷', '🌹', '🗡️', '🕯️', '🗝️', '🌙'];
+        // Duplicar para formar pares
+        let cardsArray = [...emojis, ...emojis]; 
+        
+        let hasFlippedCard = false;
+        let lockBoard = false;
+        let firstCard, secondCard;
+        let matchesFound = 0;
+        const totalPairs = emojis.length;
+
+        const gameBoard = document.getElementById('gameBoard');
+        const letterScreen = document.getElementById('letter');
+        const title = document.getElementById('title');
+
+        // Função para embaralhar
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        // Iniciar Jogo
+        function createBoard() {
+            gameBoard.innerHTML = '';
+            shuffle(cardsArray);
+            cardsArray.forEach(emoji => {
+                const card = document.createElement('div');
+                card.classList.add('card');
+                card.dataset.emoji = emoji;
+
+                const front = document.createElement('div');
+                front.classList.add('front');
+                
+                const back = document.createElement('div');
+                back.classList.add('back');
+                back.textContent = emoji;
+
+                card.appendChild(front);
+                card.appendChild(back);
+                card.addEventListener('click', flipCard);
+                gameBoard.appendChild(card);
+            });
+        }
+
+        function flipCard() {
+            if (lockBoard) return;
+            if (this === firstCard) return;
+
+            this.classList.add('flip');
+
+            if (!hasFlippedCard) {
+                hasFlippedCard = true;
+                firstCard = this;
+                return;
+            }
+
+            secondCard = this;
+            checkForMatch();
+        }
+
+        function checkForMatch() {
+            let isMatch = firstCard.dataset.emoji === secondCard.dataset.emoji;
+
+            isMatch ? disableCards() : unflipCards();
+        }
+
+        function disableCards() {
+            firstCard.removeEventListener('click', flipCard);
+            secondCard.removeEventListener('click', flipCard);
+
+            // Efeito visual de sucesso no par
+            firstCard.classList.add('matched');
+            secondCard.classList.add('matched');
+
+            resetBoard();
+            matchesFound++;
+
+            if (matchesFound === totalPairs) {
+                setTimeout(revealLetter, 800);
+            }
+        }
+
+        function unflipCards() {
+            lockBoard = true;
+            setTimeout(() => {
+                firstCard.classList.remove('flip');
+                secondCard.classList.remove('flip');
+                resetBoard();
+            }, 1000);
+        }
+
+        function resetBoard() {
+            [hasFlippedCard, lockBoard] = [false, false];
+            [firstCard, secondCard] = [null, null];
+        }
+
+        // --- RECOMPENSA & EFEITOS ---
+        function revealLetter() {
+            gameBoard.style.opacity = '0';
+            title.style.display = 'none';
+            letterScreen.classList.add('show');
+            startRain(); // Inicia a chuva de corações
+        }
+
+        function restartGame() {
+            letterScreen.classList.remove('show');
+            gameBoard.style.opacity = '1';
+            title.style.display = 'block';
+            matchesFound = 0;
+            stopRain();
+            
+            // Pequeno delay para animação
+            setTimeout(() => {
+                cardsArray = shuffle([...emojis, ...emojis]); // Reembaralha
+                createBoard();
+            }, 500);
+        }
+
+        // --- CANVAS RAIN EFFECT (CORAÇÕES ESCUROS/VERMELHOS) ---
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let animationId;
+
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        window.addEventListener('resize', () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        });
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height - canvas.height;
+                this.size = Math.random() * 15 + 10;
+                this.speed = Math.random() * 2 + 1;
+                this.color = Math.random() > 0.8 ? '#ff0000' : '#8a0303';
+                this.text = '❤';
+            }
+            update() {
+                this.y += this.speed;
+                if (this.y > canvas.height) {
+                    this.y = 0 - this.size;
+                    this.x = Math.random() * canvas.width;
+                }
+            }
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.font = `${this.size}px Arial`;
+                ctx.fillText(this.text, this.x, this.y);
+            }
+        }
+
+        function startRain() {
+            particles = [];
+            for(let i=0; i<50; i++){
+                particles.push(new Particle());
+            }
+            animateParticles();
+        }
+
+        function animateParticles() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            animationId = requestAnimationFrame(animateParticles);
+        }
+
+        function stopRain() {
+            cancelAnimationFrame(animationId);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+
+        // Inicializa o jogo
+        createBoard();
+
+    </script>
+</body>
+</html>

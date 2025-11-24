@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Puzzle Romântico Dark</title>
+    <style>
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        h1 {
+            color: #e91e63;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .puzzle-container {
+            display: grid;
+            grid-template-columns: repeat(2, 100px);
+            grid-gap: 10px;
+        }
+
+        .dropzone {
+            width: 100px;
+            height: 100px;
+            border: 2px dashed #555;
+            background-color: #222;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .piece {
+            width: 100px;
+            height: 100px;
+            background-color: #333;
+            border: 1px solid #777;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+            font-size: 24px;
+            color: #ff1744;
+        }
+    </style>
+</head>
+<body>
+    <h1>Puzzle Romântico Dark</h1>
+    <div class="puzzle-container">
+        <div class="dropzone" data-position="1">
+            <div class="piece" draggable="true" id="p1">Eu</div>
+        </div>
+        <div class="dropzone" data-position="2">
+            <div class="piece" draggable="true" id="p2">te</div>
+        </div>
+        <div class="dropzone" data-position="3">
+            <div class="piece" draggable="true" id="p3">amo</div>
+        </div>
+        <div class="dropzone" data-position="4">
+            <div class="piece" draggable="true" id="p4">&#10084;</div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const pieces = document.querySelectorAll('.piece');
+            const dropzones = document.querySelectorAll('.dropzone');
+
+            pieces.forEach(piece => {
+                piece.addEventListener('dragstart', dragStart);
+            });
+
+            dropzones.forEach(zone => {
+                zone.addEventListener('dragover', dragOver);
+                zone.addEventListener('drop', drop);
+            });
+
+            shufflePieces();
+        });
+
+        function dragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.id);
+        }
+
+        function dragOver(e) {
+            e.preventDefault();
+        }
+
+        function drop(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const draggedPiece = document.getElementById(id);
+            const fromZone = draggedPiece.parentNode;
+
+            let toZone = e.target;
+            if (toZone.classList.contains('piece')) {
+                toZone = toZone.parentNode;
+            }
+
+            if (toZone === fromZone) return;
+
+            const existingPiece = toZone.children[0];
+
+            if (existingPiece) {
+                fromZone.appendChild(existingPiece);
+            }
+
+            toZone.appendChild(draggedPiece);
+
+            checkComplete();
+        }
+
+        function shufflePieces() {
+            const zones = Array.from(document.querySelectorAll('.dropzone'));
+            const pieces = zones.map(zone => zone.removeChild(zone.children[0]));
+
+            for (let i = pieces.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pieces[i], pieces[j]] = [pieces[j], pieces[i]];
+            }
+
+            zones.forEach((zone, index) => {
+                zone.appendChild(pieces[index]);
+            });
+        }
+
+        function checkComplete() {
+            const zones = document.querySelectorAll('.dropzone');
+            if (zones[0].children[0]?.id === 'p1' &&
+                zones[1].children[0]?.id === 'p2' &&
+                zones[2].children[0]?.id === 'p3' &&
+                zones[3].children[0]?.id === 'p4') {
+                setTimeout(() => {
+                    alert('Parabéns! Você completou o puzzle. Eu te amo! ❤️');
+                }, 100);
+            }
+        }
+    </script>
+</body>
+</html>

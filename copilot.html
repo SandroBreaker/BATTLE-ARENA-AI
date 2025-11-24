@@ -1,0 +1,588 @@
+Página Romântica Dark Puzzle
+
+Abaixo está um arquivo HTML/CSS/JS único (pronto para salvar como index.html) que cria uma página dark com tema romântico — um puzzle deslizante 3x3 que revela um coração desenhado em SVG ao ser completado. UI/UX pensada: contraste, microinterações, acessibilidade básica e instruções curtas.
+
+`html
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Puzzle Romântico - Dark</title>
+<style>
+  :root{
+    --bg:#0b0c10;
+    --panel:#0f1116;
+    --accent:#ff5d84;
+    --muted:#9aa0a6;
+    --glass: rgba(255,255,255,0.03);
+    --success: #40d086;
+    --shadow: 0 6px 30px rgba(0,0,0,0.6);
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+
+  html,body{
+    height:100%;
+    margin:0;
+    background: radial-gradient(1200px 600px at 10% 10%, rgba(255,93,132,0.06), transparent 10%),
+                radial-gradient(900px 400px at 90% 90%, rgba(64,208,134,0.03), transparent 10%),
+                var(--bg);
+    color:#e9eef6;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+  }
+
+  .wrap{
+    min-height:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:48px 20px;
+    box-sizing:border-box;
+  }
+
+  .card{
+    width:920px;
+    max-width:100%;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:18px;
+    box-shadow:var(--shadow);
+    display:grid;
+    grid-template-columns: 1fr 420px;
+    gap:28px;
+    padding:28px;
+    align-items:center;
+  }
+
+  / Left: puzzle + decorative /
+  .left{
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+    align-items:center;
+  }
+
+  .title{
+    width:100%;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+  }
+
+  .h{
+    font-size:20px;
+    font-weight:600;
+    letter-spacing:0.2px;
+    color: #fff;
+  }
+
+  .subtitle{
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  .board-wrap{
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:14px;
+    padding:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+
+  .board{
+    width:420px;
+    height:420px;
+    position:relative;
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows: repeat(3, 1fr);
+    gap:6px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.2), rgba(255,255,255,0.02));
+    padding:6px;
+    border-radius:10px;
+  }
+
+  .tile{
+    background:var(--glass);
+    border-radius:8px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:20px;
+    font-weight:600;
+    color:rgba(255,255,255,0.85);
+    cursor:pointer;
+    transition: transform 220ms cubic-bezier(.2,.9,.2,1), box-shadow 220ms;
+    user-select:none;
+    overflow:hidden;
+    position:relative;
+  }
+
+  .tile:active{ transform: scale(0.98); }
+  .tile:hover{ box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+
+  .tile.empty{
+    background: transparent;
+    cursor:default;
+    box-shadow:none;
+  }
+
+  / Sliced background image technique /
+  .tile .slice{
+    position:absolute;
+    inset:0;
+    background-image: url('data:image/svg+xml;utf8,\
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600"> \
+      <defs> \
+        <linearGradient id="g" x1="0" x2="1"> \
+          <stop offset="0" stop-color="%23ff5d84"/> \
+          <stop offset="1" stop-color="%2340d086"/> \
+        </linearGradient> \
+        <filter id="grain"> \
+          <feTurbulence baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/> \
+          <feColorMatrix values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 .02 0"/> \
+        </filter> \
+      </defs> \
+      <rect width="100%" height="100%" fill="rgba(10,10,12,1)"/> \
+      <g transform="translate(300,260)"> \
+        <path d="M0,-70 C60,-130 170,-110 190,-20 C205,45 130,95 0,165 C-130,95 -205,45 -190,-20 C-170,-110 -60,-130 0,-70 Z" fill="url(%23g)" stroke="rgba(255,255,255,0.06)" stroke-width="6" /> \
+        <path d="M0,-70 C60,-130 170,-110 190,-20 C205,45 130,95 0,165" fill="none" stroke="rgba(255,255,255,0.03)" stroke-width="4" opacity="0.8"/> \
+      </g> \
+    </svg>');
+    background-size: 600px 600px;
+    background-repeat:no-repeat;
+    transition: transform 260ms cubic-bezier(.2,.9,.2,1);
+  }
+
+  / controls/side panel /
+  .right{
+    padding:18px;
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+    border-radius:12px;
+    height:100%;
+    justify-content:flex-start;
+  }
+
+  .card p { margin:0; }
+
+  .controls{
+    display:flex;
+    gap:10px;
+    align-items:center;
+  }
+
+  .btn{
+    background:transparent;
+    color:var(--accent);
+    border:1px solid rgba(255,255,255,0.06);
+    padding:8px 12px;
+    border-radius:8px;
+    cursor:pointer;
+    font-weight:600;
+    transition: background 200ms, color 200ms, transform 120ms;
+  }
+  .btn:hover{ background:rgba(255,255,255,0.02); transform:translateY(-2px); }
+  .btn.primary{
+    background: linear-gradient(90deg, rgba(255,93,132,0.12), rgba(64,208,134,0.06));
+    color: #fff;
+    border: none;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+  }
+
+  .meta{
+    color:var(--muted);
+    font-size:13px;
+    line-height:1.4;
+  }
+
+  .stats{
+    display:flex;
+    gap:12px;
+    font-size:14px;
+    color:var(--muted);
+    align-items:center;
+  }
+
+  .hint{
+    display:flex;
+    gap:8px;
+    align-items:center;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .timer{
+    font-weight:700;
+    color:#fff;
+    font-feature-settings: "tnum";
+  }
+
+  .victory{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background: linear-gradient(180deg, rgba(10,10,12,0.6), rgba(10,10,12,0.6));
+    border-radius:10px;
+    opacity:0;
+    pointer-events:none;
+    transition: opacity 320ms;
+    z-index:30;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .victory.show{
+    opacity:1;
+    pointer-events:auto;
+  }
+
+  .victory .msg{
+    font-size:22px;
+    color:var(--accent);
+    font-weight:700;
+    letter-spacing:0.2px;
+  }
+
+  .victory .sub{
+    color:var(--muted);
+    font-size:14px;
+  }
+
+  / small screens /
+  @media (max-width:880px){
+    .card{ grid-template-columns: 1fr; padding:16px; gap:18px; }
+    .board{ width:360px; height:360px; }
+  }
+  @media (max-width:420px){
+    .board{ width:300px; height:300px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <main class="card" role="application" aria-labelledby="title">
+    <section class="left" aria-label="Puzzle">
+      <div class="title">
+        <div>
+          <div id="title" class="h">Coração em Pedaços</div>
+          <div class="subtitle">Coloque as peças na ordem para revelar a mensagem</div>
+        </div>
+        <div class="stats" aria-hidden="true">
+          <div class="hint">Jogadas: <span id="moves">0</span></div>
+          <div class="hint">Tempo: <span id="time" class="timer">00:00</span></div>
+        </div>
+      </div>
+
+      <div class="board-wrap" aria-hidden="false">
+        <div class="board" id="board" aria-label="Puzzle grid">
+          <!-- tiles injected by JS -->
+          <div class="victory" id="victory" role="status" aria-live="polite">
+            <div class="msg">Você juntou meu coração</div>
+            <div class="sub">Obrigado por completar este pequeno enigma de amor.</div>
+            <button class="btn primary" id="replay">Jogar novamente</button>
+          </div>
+        </div>
+      </div>
+
+      <div style="width:100%; display:flex; gap:12px; justify-content:center; margin-top:8px;">
+        <button class="btn" id="shuffleBtn">Embaralhar</button>
+        <button class="btn primary" id="solveBtn">Mostrar solução</button>
+      </div>
+    </section>
+
+    <aside class="right" aria-label="Controles">
+      <div>
+        <div style="font-weight:700; font-size:15px;">Instruções</div>
+        <p class="meta">Clique em uma peça adjacente ao espaço vazio para movê-la. Complete o quebra-cabeça para revelar o coração e a mensagem.</p>
+      </div>
+
+      <div>
+        <div style="font-weight:700; font-size:15px;">Aprimore a experiência</div>
+        <p class="meta">Design escuro, foco na microanimação e feedback imediato para garantir uma sensação tátil e romântica.</p>
+      </div>
+
+      <div style="margin-top:auto;">
+        <div style="font-weight:700; font-size:15px; margin-bottom:8px;">Mensagem oculta</div>
+        <p class="meta">Ao resolver, uma mensagem será exibida. Valorize usabilidade: botões grandes, contraste suficiente e transições suaves.</p>
+      </div>
+    </aside>
+  </main>
+</div>
+
+<script>
+/* Puzzle 3x3 sliding - lógica clara e robusta.
+   - Não altera nomes globais sensíveis.
+   - Métodos pequenos e testáveis.
+*/
+
+(function(){
+  const size = 3;
+  const boardEl = document.getElementById('board');
+  const movesEl = document.getElementById('moves');
+  const timeEl = document.getElementById('time');
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const solveBtn = document.getElementById('solveBtn');
+  const replayBtn = document.getElementById('replay');
+  const victoryEl = document.getElementById('victory');
+
+  let tiles = [];        // array of tile objects { id, index } where index is 0..size*size-1
+  let emptyIndex = size*size - 1;
+  let moves = 0;
+  let timer = null;
+  let seconds = 0;
+  let running = false;
+
+  function formatTime(s){
+    const mm = String(Math.floor(s/60)).padStart(2,'0');
+    const ss = String(s%60).padStart(2,'0');
+    return mm + ':' + ss;
+  }
+
+  function startTimer(){
+    if(running) return;
+    running = true;
+    timer = setInterval(()=>{
+      seconds++;
+      timeEl.textContent = formatTime(seconds);
+    }, 1000);
+  }
+
+  function stopTimer(){
+    running = false;
+    if(timer){ clearInterval(timer); timer = null; }
+  }
+
+  function resetTimer(){
+    stopTimer();
+    seconds = 0;
+    timeEl.textContent = '00:00';
+  }
+
+  function setMoves(n){
+    moves = n;
+    movesEl.textContent = String(moves);
+  }
+
+  function createTiles(){
+    tiles = [];
+    const total = size*size;
+    for(let i=0;i<total;i++){
+      tiles.push({ id: i+1, index:i });
+    }
+    emptyIndex = total - 1;
+    // mark last tile as empty physically by id 0 for convenience
+    tiles[emptyIndex].id = 0;
+  }
+
+  function isSolved(){
+    for(let i=0;i<tiles.length;i++){
+      const expected = (i === tiles.length-1) ? 0 : i+1;
+      if(tiles[i].id !== expected) return false;
+    }
+    return true;
+  }
+
+  function swapIndices(i,j){
+    const tmp = tiles[i];
+    tiles[i] = tiles[j];
+    tiles[j] = tmp;
+  }
+
+  function neighbors(index){
+    const r = Math.floor(index / size);
+    const c = index % size;
+    const list = [];
+    if(r>0) list.push(index - size);
+    if(r<size-1) list.push(index + size);
+    if(c>0) list.push(index -1);
+    if(c<size-1) list.push(index +1);
+    return list;
+  }
+
+  function canMove(index){
+    return neighbors(index).includes(emptyIndex);
+  }
+
+  function moveTile(index, record=true){
+    if(!canMove(index)) return false;
+    swapIndices(index, emptyIndex);
+    emptyIndex = index;
+    renderTiles();
+    if(record){
+      setMoves(moves+1);
+      startTimer();
+    }
+    if(isSolved()){
+      stopTimer();
+      showVictory();
+    }
+    return true;
+  }
+
+  function shuffle(times = 120){
+    // perform legal random moves from solved position for guaranteed solvability
+    let last = -1;
+    for(let i=0;i<times;i++){
+      const neigh = neighbors(emptyIndex).filter(n => n !== last);
+      const pick = neigh[Math.floor(Math.random()*neigh.length)];
+      swapIndices(pick, emptyIndex);
+      last = pick;
+      emptyIndex = pick;
+    }
+    renderTiles();
+    setMoves(0);
+    resetTimer();
+    hideVictory();
+  }
+
+  function showVictory(){
+    victoryEl.classList.add('show');
+    // subtle celebratory effect on slices
+    const slices = boardEl.querySelectorAll('.slice');
+    slices.forEach((s, i) => {
+      s.style.transform = 'scale(1.02) rotate(' + (Math.random()*6 - 3) + 'deg)';
+    });
+  }
+
+  function hideVictory(){
+    victoryEl.classList.remove('show');
+    const slices = boardEl.querySelectorAll('.slice');
+    slices.forEach(s => s.style.transform = '');
+  }
+
+  function renderTiles(){
+    // clear all child tiles except victory overlay
+    Array.from(boardEl.children).forEach(ch => {
+      if(!ch.classList.contains('victory')) ch.remove();
+    });
+
+    const total = size*size;
+    const tileSize = 100 / size;
+    for(let i=0;i<total;i++){
+      const t = tiles[i];
+      const el = document.createElement('button');
+      el.className = 'tile';
+      el.setAttribute('data-pos', i);
+      el.setAttribute('aria-label', t.id === 0 ? 'Espaço vazio' : 'Peça ' + t.id);
+      el.setAttribute('role', 'button');
+      if(t.id === 0){
+        el.classList.add('empty');
+        el.setAttribute('aria-hidden','true');
+      } else {
+        // show subtle index for accessibility (visually hidden)
+        const vis = document.createElement('span');
+        vis.style.position='absolute';
+        vis.style.left='8px';
+        vis.style.top='6px';
+        vis.style.fontSize='12px';
+        vis.style.opacity='0.06';
+        vis.textContent = t.id;
+        el.appendChild(vis);
+      }
+
+      // slice background positioning
+      const slice = document.createElement('div');
+      slice.className = 'slice';
+      // compute background-position based on solved index of this tile id
+      // solved position for id X (1..n-1) is X-1
+      const solvedIndex = (t.id === 0) ? total-1 : (t.id - 1);
+      const row = Math.floor(solvedIndex / size);
+      const col = solvedIndex % size;
+      const posX = -col * (600 / size);
+      const posY = -row * (600 / size);
+      slice.style.backgroundPosition = posX + 'px ' + posY + 'px';
+      el.appendChild(slice);
+
+      // movement handler
+      el.addEventListener('click', (e) => {
+        const pos = Number(el.getAttribute('data-pos'));
+        if(moveTile(pos)) {
+          // small pop animation for moved tile
+          el.style.transform = 'translateY(-6px) scale(1.01)';
+          setTimeout(()=> el.style.transform = '', 160);
+        }
+      });
+
+      // keyboard support
+      el.tabIndex = (t.id === 0) ? -1 : 0;
+      el.addEventListener('keydown', (ev) => {
+        if(ev.key === 'Enter' || ev.key === ' '){
+          ev.preventDefault();
+          const pos = Number(el.getAttribute('data-pos'));
+          moveTile(pos);
+        }
+      });
+
+      boardEl.appendChild(el);
+    }
+  }
+
+  function solve(){
+    // restore solved state
+    createTiles();
+    renderTiles();
+    setMoves(0);
+    resetTimer();
+    hideVictory();
+  }
+
+  // init
+  createTiles();
+  renderTiles();
+  setMoves(0);
+  resetTimer();
+
+  // events
+  shuffleBtn.addEventListener('click', () => {
+    shuffle(120);
+  });
+
+  solveBtn.addEventListener('click', () => {
+    solve();
+    showVictory();
+  });
+
+  replayBtn.addEventListener('click', () => {
+    shuffle(120);
+    hideVictory();
+  });
+
+  // small UX: start with a shuffled but solvable board
+  setTimeout(()=> shuffle(100), 220);
+
+  // accessibility: allow arrow keys to move tiles relative to empty
+  document.addEventListener('keydown', (e) => {
+    if(e.key.startsWith('Arrow')){
+      // compute tile to move based on emptyIndex and arrow direction
+      let target = null;
+      const r = Math.floor(emptyIndex / size);
+      const c = emptyIndex % size;
+      if(e.key === 'ArrowUp' && r < size-1) target = emptyIndex + size;
+      if(e.key === 'ArrowDown' && r > 0) target = emptyIndex - size;
+      if(e.key === 'ArrowLeft' && c < size-1) target = emptyIndex + 1;
+      if(e.key === 'ArrowRight' && c > 0) target = emptyIndex - 1;
+      if(target !== null){
+        moveTile(target);
+        e.preventDefault();
+      }
+    }
+  });
+
+})();
+</script>
+</body>
+</html>
+`
+
+Observações rápidas:
+- Arquitetura simples: toda lógica do puzzle é isolada; embaralhamento é feito por movimentos legais para garantir solucionabilidade.
+- UX: foco em contraste, microanimações e acessibilidade via teclado.
+- Se quiser, eu altero o tamanho da grade, adiciono som/feedback tátil, ou troco a imagem de fundo por uma sua (me envie SVG/PNG) mantendo as regras do protocolo.

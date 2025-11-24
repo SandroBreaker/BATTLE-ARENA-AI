@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Code Battle Arena</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;700&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/index.css">
+</head>
+<body>
+
+    <div class="background-noise"></div>
+    <div class="ambient-light light-1"></div>
+    <div class="ambient-light light-2"></div>
+
+    <main class="app-container">
+        <header class="hero-section">
+            <div class="badge">Code Evaluation System</div>
+            <h1 class="glitch-text" data-text="BATTLE ARENA">BATTLE ARENA</h1>
+            <p class="hero-subtitle">Comparativo de performance e qualidade de código de IAs.<br>
+            <small style="color: #ef4444;">*Requer servidor local (Live Server) para análise de código.</small></p>
+        </header>
+
+        <section class="metrics-dashboard">
+            <div class="metric-card html">
+                <div class="icon">H</div>
+                <div class="info">
+                    <strong>HTML5</strong>
+                    <span>Semântica</span>
+                </div>
+            </div>
+            <div class="metric-card css">
+                <div class="icon">C</div>
+                <div class="info">
+                    <strong>CSS3</strong>
+                    <span>Design System</span>
+                </div>
+            </div>
+            <div class="metric-card js">
+                <div class="icon">J</div>
+                <div class="info">
+                    <strong>JavaScript</strong>
+                    <span>Lógica & ES6+</span>
+                </div>
+            </div>
+        </section>
+
+        <section id="cards-grid" class="cards-grid">
+            <div class="loader-container">
+                <div class="spinner"></div>
+                <p>Carregando arquivos externos...</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Preview Modal -->
+    <div id="preview-overlay" class="overlay hidden">
+        <div class="modal-window">
+            <div class="modal-header">
+                <div class="modal-left">
+                    <button id="close-btn" class="icon-btn" aria-label="Voltar">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                    </button>
+                    <div class="modal-info">
+                        <h2 id="modal-title">Nome do Arquivo</h2>
+                        <span id="modal-score" class="score-pill">0</span>
+                    </div>
+                </div>
+                
+                <div class="modal-controls">
+                    <div class="device-switch">
+                        <button class="switch-btn active" onclick="setFrameWidth('100%')" title="Desktop">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect></svg>
+                        </button>
+                        <button class="switch-btn" onclick="setFrameWidth('375px')" title="Mobile">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-body">
+                <div class="iframe-wrapper">
+                    <iframe id="preview-frame"></iframe>
+                </div>
+                <aside class="analysis-sidebar">
+                    <h3>Auditoria de Código</h3>
+                    <div id="analysis-log" class="log-list"></div>
+                </aside>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts Separados -->
+    <script src="algorithm.js"></script>
+    <script src="app.js"></script>
+<script type="module" src="/index.tsx"></script>
+</body>
+</html>
